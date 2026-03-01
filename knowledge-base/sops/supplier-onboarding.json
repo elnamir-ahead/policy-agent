@@ -1,0 +1,25 @@
+{
+  "title": "Supplier Onboarding Process",
+  "steps": [
+    {
+      "step": 1,
+      "title": "Submit New Vendor Request",
+      "content": "Complete the New Vendor Request form in the procurement portal. Include: vendor name, contact, category, estimated spend, and business justification."
+    },
+    {
+      "step": 2,
+      "title": "Required Documentation",
+      "content": "Vendor must provide: (1) W-9 or W-8BEN for tax. (2) Certificate of Insurance: General Liability $1M, Professional Liability $1M if services. (3) ACH/banking details. (4) Signed NDA if confidential. (5) Security questionnaire if handling data."
+    },
+    {
+      "step": 3,
+      "title": "Approvals",
+      "content": "Approval path: Requester's Manager → Category Lead → Procurement. For vendors over $100k annual: add Finance review. For data-handling vendors: add Security & Legal."
+    },
+    {
+      "step": 4,
+      "title": "SLA Expectations",
+      "content": "Standard onboarding SLA: 5 business days for complete packages. Incomplete submissions: 2 business days to request missing items. Expedited (urgent): 2 business days, requires VP approval."
+    }
+  ]
+}

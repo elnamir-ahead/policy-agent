@@ -1,0 +1,44 @@
+{
+  "thresholds": [
+    {
+      "min": 0,
+      "max": 5000,
+      "method": "P-card",
+      "approvers": "Cardholder",
+      "notes": "Eligible categories only; no contracts"
+    },
+    {
+      "min": 5000,
+      "max": 25000,
+      "method": "Purchase Order",
+      "approvers": "Manager",
+      "notes": "Single approver"
+    },
+    {
+      "min": 25000,
+      "max": 100000,
+      "method": "Purchase Order",
+      "approvers": "Manager + Director",
+      "notes": "Two approvers required"
+    },
+    {
+      "min": 100000,
+      "max": 250000,
+      "method": "Competitive Bids",
+      "approvers": "Director + VP",
+      "notes": "Min 2 quotes; Legal if contract"
+    },
+    {
+      "min": 250000,
+      "max": null,
+      "method": "Formal Sourcing (RFQ/RFP)",
+      "approvers": "VP + Legal",
+      "notes": "Legal review required; Security if data"
+    }
+  ],
+  "escalations": {
+    "legal_review": ["Contract terms", "MSA/SOW", "Over $100k", "Indemnification"],
+    "security_review": ["PII/PHI data", "Software integrations", "Cloud services"],
+    "finance_review": ["Over $250k", "Multi-year commitment", "Payment terms > 30 days"]
+  }
+}

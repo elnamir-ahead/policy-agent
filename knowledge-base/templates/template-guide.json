@@ -1,0 +1,32 @@
+{
+  "templates": [
+    {
+      "name": "SOW",
+      "full_name": "Statement of Work",
+      "when_to_use": "Project-based services; deliverables and milestones; fixed or T&M engagements",
+      "mandatory_fields": ["Scope of work", "Deliverables", "Timeline", "Pricing/payment terms", "Acceptance criteria"],
+      "link": "/templates/sow-template.docx"
+    },
+    {
+      "name": "MSA",
+      "full_name": "Master Service Agreement",
+      "when_to_use": "Ongoing vendor relationship; framework for multiple SOWs; SaaS master terms",
+      "mandatory_fields": ["Term", "Payment terms", "Limitation of liability", "Termination", "IP ownership"],
+      "link": "/templates/msa-template.docx"
+    },
+    {
+      "name": "NDA",
+      "full_name": "Non-Disclosure Agreement",
+      "when_to_use": "Before sharing confidential info; vendor evaluations; RFP discussions",
+      "mandatory_fields": ["Definition of confidential info", "Term", "Return/destruction of materials"],
+      "link": "/templates/nda-template.docx"
+    }
+  ],
+  "intake_required": [
+    "Business justification",
+    "Category",
+    "Estimated spend",
+    "Urgency",
+    "Data sensitivity (if applicable)"
+  ]
+}

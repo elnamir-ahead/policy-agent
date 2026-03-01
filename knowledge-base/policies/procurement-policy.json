@@ -1,0 +1,25 @@
+{
+  "title": "Procurement Policy",
+  "sections": [
+    {
+      "id": "POL-001",
+      "title": "Spend Thresholds & Approval Requirements",
+      "content": "All purchases must follow the spend threshold matrix. Under $5,000: P-card allowed for eligible categories. $5,000–$25,000: Purchase Order (PO) required, single approver. $25,000–$100,000: PO required, two approvers (Manager + Director). $100,000–$250,000: Competitive bids required (minimum 2 quotes), VP approval. Over $250,000: Formal sourcing event (RFQ/RFP), Legal review, VP+ approval."
+    },
+    {
+      "id": "POL-002",
+      "title": "P-Card Usage",
+      "content": "P-cards may be used for: office supplies, software subscriptions under $5k/year, training under $2k, travel expenses, and professional services under $5k. P-cards may NOT be used for: hardware over $1k, software with data access (PII/PHI), recurring subscriptions over $5k/year, or any purchase requiring a contract."
+    },
+    {
+      "id": "POL-003",
+      "title": "Competitive Bidding",
+      "content": "Competitive bids are required for: (1) Any single purchase over $100,000. (2) Services engagements over $50,000. (3) Software/SaaS over $25,000/year. Minimum 2 written quotes required. Document rationale if single source is selected."
+    },
+    {
+      "id": "POL-004",
+      "title": "Software & SaaS Purchases",
+      "content": "Software purchases require: (1) Security review if handling PII, PHI, or financial data. (2) Legal review if contract terms are non-standard. (3) IT approval for integrations. SaaS under $5k/year may use P-card if no data access. SaaS $5k–$25k: PO + Security questionnaire. Over $25k: Full procurement process."
+    }
+  ]
+}
