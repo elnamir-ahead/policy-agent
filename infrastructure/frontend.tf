@@ -32,6 +32,23 @@ resource "aws_s3_object" "config" {
   content_type = "application/json"
 }
 
+# CloudFront Function: rewrite /api/chat -> /chat for Lambda
+resource "aws_cloudfront_function" "api_rewrite" {
+  name    = "${var.project_name}-api-rewrite"
+  runtime = "cloudfront-js-1.0"
+  comment = "Rewrite /api/* to /* for Lambda origin"
+  publish = true
+  code    = <<-EOT
+function handler(event) {
+  var request = event.request;
+  if (request.uri && request.uri.startsWith("/api/")) {
+    request.uri = request.uri.replace(/^\/api\//, "/");
+  }
+  return request;
+}
+EOT
+}
+
 # CloudFront OAC (must exist before distribution)
 resource "aws_cloudfront_origin_access_control" "frontend" {
   name                              = "${var.project_name}-frontend-oac"
@@ -67,7 +84,7 @@ resource "aws_cloudfront_distribution" "frontend" {
     }
   }
 
-  # API: /api/* -> Lambda (same origin as frontend, no CORS/403)
+  # API: /api/* -> Lambda (path rewritten to /* via CloudFront Function)
   ordered_cache_behavior {
     path_pattern     = "/api/*"
     target_origin_id = "Lambda-chat"
@@ -76,6 +93,11 @@ resource "aws_cloudfront_distribution" "frontend" {
     cached_methods         = ["GET", "HEAD"]
     viewer_protocol_policy = "redirect-to-https"
     compress               = true
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.api_rewrite.arn
+    }
 
     forwarded_values {
       query_string = true

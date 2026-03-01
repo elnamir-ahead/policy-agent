@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -64,12 +64,25 @@ function App() {
       })
       clearTimeout(timeoutId)
 
+      const text = await res.text()
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
+        const err = (() => {
+          try {
+            return JSON.parse(text)
+          } catch {
+            return {}
+          }
+        })()
         throw new Error(err.detail || err.error || `HTTP ${res.status}`)
       }
 
-      const data = await res.json()
+      const data = (() => {
+        try {
+          return JSON.parse(text)
+        } catch {
+          throw new Error('Invalid response from server. Try refreshing the page.')
+        }
+      })()
       setMessages((prev: Message[]) => [
         ...prev,
         {
@@ -82,6 +95,8 @@ function App() {
       const msg = err instanceof Error ? err.message : 'Failed to get response'
       const hint = msg.includes('403')
         ? ' The API may be restricted or the config is outdated. Try refreshing the page.'
+        : msg.includes('Invalid response') || msg.includes('<!DOCTYPE')
+        ? ' The server returned an error page. Try refreshing or wait a few minutes for deployment.'
         : msg.includes('abort') || msg.includes('AbortError')
         ? ' Request timed out. The API may be slow — try again.'
         : msg.includes('fetch') || msg.includes('Failed')
@@ -168,12 +183,12 @@ function App() {
                   className={`max-w-[85%] rounded-2xl px-4 py-3.5 ${
                     m.role === 'user'
                       ? 'bg-gradient-to-br from-accent-amber to-amber-600 text-ink-950 font-medium shadow-lg shadow-amber-500/20'
-                      : 'bg-ink-800/80 border border-ink-600/40 text-ink-200 backdrop-blur-sm'
+                      : 'bg-ink-700/90 border border-ink-600/50 text-white backdrop-blur-sm'
                   }`}
                 >
                   <div className="whitespace-pre-wrap text-sm leading-relaxed">{m.content}</div>
                   {m.citations && m.citations.length > 0 && (
-                    <div className="mt-2 pt-2 border-t border-ink-600/50 text-xs text-ink-500">
+                    <div className="mt-2 pt-2 border-t border-ink-500/50 text-xs text-ink-300">
                       Sources: {m.citations.join(', ')}
                     </div>
                   )}
@@ -182,7 +197,7 @@ function App() {
             ))}
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-ink-800/80 border border-ink-600/40 rounded-2xl px-4 py-3.5 backdrop-blur-sm">
+                <div className="bg-ink-700/90 border border-ink-600/50 rounded-2xl px-4 py-3.5 backdrop-blur-sm">
                   <div className="flex gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-accent-amber animate-bounce" style={{ animationDelay: '0ms' }} />
                     <span className="w-2 h-2 rounded-full bg-accent-amber animate-bounce" style={{ animationDelay: '150ms' }} />

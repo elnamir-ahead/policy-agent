@@ -18,6 +18,8 @@ export default {
           600: '#334155',
           400: '#94a3b8',
           300: '#cbd5e1',
+          200: '#e2e8f0',
+          100: '#f1f5f9',
         },
         accent: {
           amber: '#f59e0b',
