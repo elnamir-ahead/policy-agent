@@ -33,7 +33,7 @@ resource "aws_iam_role_policy" "lambda_bedrock" {
         Action   = ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"]
         Resource = [
           "arn:aws:bedrock:${var.aws_region}::foundation-model/*",
-          "arn:aws:bedrock:*::inference-profile/*"
+          "arn:aws:bedrock:${var.aws_region}:${data.aws_caller_identity.current.account_id}:inference-profile/*"
         ]
       }
     ]
