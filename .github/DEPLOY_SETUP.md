@@ -2,14 +2,22 @@
 
 The workflow deploys to AWS on every push to `main` or when triggered manually.
 
-## Required GitHub Secrets
+## Required: Add GitHub Secrets
 
-Add these in **Settings → Secrets and variables → Actions**:
+**Without these, the workflow will fail with "Credentials could not be loaded".**
+
+1. Go to your repo: **https://github.com/elnamir-ahead/policy-agent**
+2. Click **Settings** → **Secrets and variables** → **Actions**
+3. Click **New repository secret**
+4. Add both:
 
 | Secret | Description |
 |--------|-------------|
-| `AWS_ACCESS_KEY_ID` | AWS IAM access key |
+| `AWS_ACCESS_KEY_ID` | AWS IAM access key (e.g. `AKIA...`) |
 | `AWS_SECRET_ACCESS_KEY` | AWS IAM secret key |
+
+**To create AWS credentials:**
+- AWS Console → IAM → Users → your user → Security credentials → Create access key
 
 ## IAM User Permissions
 
