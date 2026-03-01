@@ -28,8 +28,9 @@ terraform apply -auto-approve
 echo "==> Uploading frontend to S3..."
 BUCKET=$(terraform output -raw frontend_bucket)
 DISTRIBUTION=$(terraform output -raw cloudfront_distribution_id)
-# Use /api (CloudFront proxy to Lambda) for same-origin, avoids 403
-echo '{"apiUrl": "/api"}' > "$PROJECT_ROOT/frontend/dist/config.json"
+# Use Lambda URL directly (CloudFront proxy had Host header issues)
+API_URL=$(terraform output -raw lambda_function_url)
+echo "{\"apiUrl\": \"${API_URL%/}\"}" > "$PROJECT_ROOT/frontend/dist/config.json"
 aws s3 sync "$PROJECT_ROOT/frontend/dist" "s3://$BUCKET" --delete
 
 echo "==> Invalidating CloudFront cache..."

@@ -86,7 +86,8 @@ jobs:
         run: |
           BUCKET=$(cd infrastructure && terraform output -raw frontend_bucket)
           DISTRIBUTION=$(cd infrastructure && terraform output -raw cloudfront_distribution_id)
-          echo '{"apiUrl": "/api"}' > frontend/dist/config.json
+          API_URL=$(cd infrastructure && terraform output -raw lambda_function_url)
+          echo "{\"apiUrl\": \"${API_URL%/}\"}" > frontend/dist/config.json
           aws s3 sync frontend/dist "s3://$BUCKET" --delete
 
       - name: Invalidate CloudFront cache for config.json
