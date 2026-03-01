@@ -114,11 +114,11 @@ function App() {
     }
   }
 
-  const suggestedQuestions = [
-    'I need to buy a SaaS tool for my team — $18k/year. What do I do?',
-    'We want to use a new vendor. What paperwork is required?',
-    'Give me the SOW template and draft an email to procurement with the required intake details.',
-    'What is the date today?',
+  const suggestedQuestions: { name: string; question: string }[] = [
+    { name: 'Buying SaaS ($18k)', question: 'I need to buy a SaaS tool for my team — $18k/year. What do I do?' },
+    { name: 'New vendor paperwork', question: 'We want to use a new vendor. What paperwork is required?' },
+    { name: 'SOW template & email', question: 'Give me the SOW template and draft an email to procurement with the required intake details.' },
+    { name: "Today's date", question: "What is the date today?" },
   ]
 
   return (
@@ -160,13 +160,14 @@ function App() {
             <div className="space-y-3">
               <p className="text-xs font-medium text-ink-500 uppercase tracking-wider">Try these</p>
               <div className="grid gap-2">
-                {suggestedQuestions.map((q) => (
+                {suggestedQuestions.map((item) => (
                   <button
-                    key={q}
-                    onClick={() => setInput(q)}
+                    key={item.question}
+                    onClick={() => setInput(item.question)}
                     className="group block w-full text-left px-4 py-3.5 rounded-xl bg-ink-800/60 border border-ink-600/40 hover:border-accent-amber/40 hover:bg-ink-800 transition-all duration-200 text-sm text-ink-300 hover:text-ink-100"
                   >
-                    <span className="group-hover:text-accent-amber transition-colors">{q}</span>
+                    <span className="font-medium text-ink-400 group-hover:text-accent-amber transition-colors">{item.name}</span>
+                    <span className="block mt-1 text-ink-200 group-hover:text-ink-100 transition-colors">{item.question}</span>
                   </button>
                 ))}
               </div>

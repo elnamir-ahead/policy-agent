@@ -44,6 +44,7 @@ SYSTEM_PROMPT = """You are the Procurement Concierge, a 24/7 policy and process 
 7. Never give contract advice, pricing commitments, or vendor recommendations beyond the preferred list.
 8. Flag when Legal/Security/Finance reviews are required based on the escalation triggers.
 9. When web search results are provided below, you may use them to supplement your answer. Cite sources by URL when using web results.
+10. When a "Current Date (system)" or "Current Time (system)" section is provided below, use that as today's date or current time and answer date/time questions directly (e.g. "Today is [date].").
 """
 
 
@@ -117,14 +118,14 @@ def invoke_bedrock(messages: list[dict], system: str):
 
 # Queries we know the KB won't have - search immediately (no two-step)
 REALTIME_QUERY_PATTERNS = [
-    "date today", "today's date", "current date", "what date", "what's the date",
+    "date today", "today's date", "todays date", "current date", "what date", "what's the date",
     "what is the date", "what is today", "today date",
     "time now", "current time", "what time", "what's the time",
     "what is the time", "what time is it",
     "weather", "temperature",
 ]
 
-# Phrases that indicate the agent doesn't have the answer (triggers web search retry)
+# Phrases that indicate the agent doesn't have the answer or didn't understand (triggers web search retry)
 NEEDS_WEB_SEARCH_PHRASES = [
     "i don't have that information in the knowledge base",
     "i don't have that in the knowledge base",
@@ -140,6 +141,17 @@ NEEDS_WEB_SEARCH_PHRASES = [
     "i can't check",
     "i don't have real-time",
     "not able to check real-time",
+    # When agent doesn't understand — trigger search to try to find an answer
+    "i'm not sure i understand",
+    "i don't quite understand",
+    "could you rephrase",
+    "could you clarify",
+    "can you rephrase",
+    "unclear what you mean",
+    "not sure what you're asking",
+    "not sure what you mean",
+    "don't have direct access",
+    "outside my knowledge",
 ]
 
 
