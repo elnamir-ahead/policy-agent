@@ -152,6 +152,14 @@ NEEDS_WEB_SEARCH_PHRASES = [
     "not sure what you mean",
     "don't have direct access",
     "outside my knowledge",
+    # Answer is from training / might be outdated → run search to get current info
+    "knowledge cutoff",
+    "as of my knowledge",
+    "check a live news source",
+    "most current information",
+    "recommend checking",
+    "training data",
+    "training cutoff",
 ]
 
 
