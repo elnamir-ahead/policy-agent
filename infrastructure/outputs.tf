@@ -4,8 +4,13 @@ output "app_url" {
 }
 
 output "lambda_function_url" {
-  description = "URL for the chat Lambda API"
+  description = "URL for the chat Lambda API (direct)"
   value       = aws_lambda_function_url.chat.function_url
+}
+
+output "api_gateway_url" {
+  description = "URL for the chat API (via API Gateway - use this for frontend)"
+  value       = "${aws_apigatewayv2_stage.default.invoke_url}/chat"
 }
 
 output "frontend_bucket" {

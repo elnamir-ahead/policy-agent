@@ -24,11 +24,11 @@ resource "aws_s3_bucket_ownership_controls" "frontend" {
   }
 }
 
-# Config.json: use Lambda URL directly (CloudFront proxy had Host header issues)
+# Config.json: use API Gateway URL (reliable, avoids Lambda URL 403)
 resource "aws_s3_object" "config" {
   bucket       = aws_s3_bucket.frontend.id
   key          = "config.json"
-  content      = jsonencode({ apiUrl = trimsuffix(aws_lambda_function_url.chat.function_url, "/") })
+  content      = jsonencode({ apiUrl = trimsuffix(aws_apigatewayv2_stage.default.invoke_url, "/") })
   content_type = "application/json"
 }
 
