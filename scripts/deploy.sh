@@ -27,10 +27,14 @@ terraform apply -auto-approve
 
 echo "==> Uploading frontend to S3..."
 BUCKET=$(terraform output -raw frontend_bucket)
+DISTRIBUTION=$(terraform output -raw cloudfront_distribution_id)
 API_URL=$(terraform output -raw lambda_function_url)
 # Inject config.json with API URL (--delete would remove Terraform's config, so we add it to dist)
 echo "{\"apiUrl\": \"$API_URL\"}" > "$PROJECT_ROOT/frontend/dist/config.json"
 aws s3 sync "$PROJECT_ROOT/frontend/dist" "s3://$BUCKET" --delete
+
+echo "==> Invalidating CloudFront cache..."
+aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION" --paths "/config.json" "/index.html"
 
 echo ""
 echo "==> Deployment complete!"

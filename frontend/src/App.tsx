@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -11,22 +11,26 @@ function useApiUrl() {
   const [apiUrl, setApiUrl] = useState<string>(
     (import.meta.env.VITE_API_URL as string) || '/api'
   )
+  const [configLoaded, setConfigLoaded] = useState(!import.meta.env.PROD || !!import.meta.env.VITE_API_URL)
 
   useEffect(() => {
     // In production, load from config.json (set at deploy time)
     if (import.meta.env.PROD && !import.meta.env.VITE_API_URL) {
-      fetch('/config.json')
+      fetch('/config.json?t=' + Date.now())
         .then((r) => r.json())
-        .then((c) => c.apiUrl && setApiUrl(c.apiUrl))
-        .catch(() => {})
+        .then((c) => {
+          if (c.apiUrl) setApiUrl(c.apiUrl)
+          setConfigLoaded(true)
+        })
+        .catch(() => setConfigLoaded(true))
     }
   }, [])
 
-  return apiUrl
+  return { apiUrl, configLoaded }
 }
 
 function App() {
-  const apiUrl = useApiUrl()
+  const { apiUrl, configLoaded } = useApiUrl()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -41,7 +45,7 @@ function App() {
     if (!text || loading) return
 
     setInput('')
-    setMessages((prev) => [...prev, { role: 'user', content: text }])
+    setMessages((prev: Message[]) => [...prev, { role: 'user', content: text }])
     setLoading(true)
 
     try {
@@ -50,11 +54,15 @@ function App() {
         content: m.content,
       }))
 
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 90000) // 90s (Lambda timeout is 60s)
       const res = await fetch(`${apiUrl}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: chatMessages, session_id: sessionId }),
+        signal: controller.signal,
       })
+      clearTimeout(timeoutId)
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
@@ -62,7 +70,7 @@ function App() {
       }
 
       const data = await res.json()
-      setMessages((prev) => [
+      setMessages((prev: Message[]) => [
         ...prev,
         {
           role: 'assistant',
@@ -71,11 +79,19 @@ function App() {
         },
       ])
     } catch (err) {
-      setMessages((prev) => [
+      const msg = err instanceof Error ? err.message : 'Failed to get response'
+      const hint = msg.includes('403')
+        ? ' The API may be restricted or the config is outdated. Try refreshing the page.'
+        : msg.includes('abort') || msg.includes('AbortError')
+        ? ' Request timed out. The API may be slow — try again.'
+        : msg.includes('fetch') || msg.includes('Failed')
+        ? ' Make sure the backend is running (uvicorn app:app --reload) and AWS credentials are configured.'
+        : ''
+      setMessages((prev: Message[]) => [
         ...prev,
         {
           role: 'assistant',
-          content: `Error: ${err instanceof Error ? err.message : 'Failed to get response'}. Make sure the backend is running (uvicorn app:app --reload) and AWS credentials are configured.`,
+          content: `Error: ${msg}.${hint}`,
         },
       ])
     } finally {
@@ -143,7 +159,7 @@ function App() {
           </div>
         ) : (
           <div className="space-y-6">
-            {messages.map((m, i) => (
+            {messages.map((m: Message, i: number) => (
               <div
                 key={i}
                 className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
@@ -182,7 +198,7 @@ function App() {
 
       <footer className="border-t border-ink-700/60 px-6 py-4 backdrop-blur-sm bg-ink-950/60">
         <form
-          onSubmit={(e) => {
+          onSubmit={(e: React.FormEvent) => {
             e.preventDefault()
             sendMessage()
           }}
@@ -191,14 +207,15 @@ function App() {
           <input
             type="text"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInput(e.target.value)}
             placeholder="Ask anything — policy, process, or general..."
             className="flex-1 rounded-xl bg-ink-800/80 border border-ink-600/40 px-4 py-3 text-ink-100 placeholder-ink-500 focus:outline-none focus:ring-2 focus:ring-accent-amber/40 focus:border-accent-amber/60 transition-all"
             disabled={loading}
           />
           <button
             type="submit"
-            disabled={loading || !input.trim()}
+            disabled={loading || !input.trim() || !configLoaded}
+            title={!configLoaded ? 'Loading...' : undefined}
             className="px-6 py-3 rounded-xl bg-gradient-to-br from-accent-amber to-amber-600 text-ink-950 font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-amber-500/20 transition-all"
           >
             Send

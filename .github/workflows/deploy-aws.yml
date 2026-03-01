@@ -85,9 +85,15 @@ jobs:
       - name: Deploy frontend to S3
         run: |
           BUCKET=$(cd infrastructure && terraform output -raw frontend_bucket)
+          DISTRIBUTION=$(cd infrastructure && terraform output -raw cloudfront_distribution_id)
           API_URL=$(cd infrastructure && terraform output -raw lambda_function_url)
           echo "{\"apiUrl\": \"$API_URL\"}" > frontend/dist/config.json
           aws s3 sync frontend/dist "s3://$BUCKET" --delete
+
+      - name: Invalidate CloudFront cache for config.json
+        run: |
+          DISTRIBUTION=$(cd infrastructure && terraform output -raw cloudfront_distribution_id)
+          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION" --paths "/config.json" "/index.html"
 
       - name: Deployment summary
         run: |
