@@ -85,6 +85,7 @@ resource "aws_cloudfront_distribution" "frontend" {
   }
 
   # API: /api/* -> Lambda (path rewritten to /* via CloudFront Function)
+  # Use AllViewerExceptHostHeader so Host matches Lambda URL (avoids 403)
   ordered_cache_behavior {
     path_pattern     = "/api/*"
     target_origin_id = "Lambda-chat"
@@ -99,15 +100,8 @@ resource "aws_cloudfront_distribution" "frontend" {
       function_arn = aws_cloudfront_function.api_rewrite.arn
     }
 
-    forwarded_values {
-      query_string = true
-      headers      = ["Content-Type", "Origin"]
-      cookies { forward = "none" }
-    }
-
-    min_ttl     = 0
-    default_ttl = 0
-    max_ttl     = 0
+    cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad" # CachingDisabled
+    origin_request_policy_id = "b689b0a8-53d0-40ab-baf2-5ca1fa08df38" # AllViewerExceptHostHeader
   }
 
   default_cache_behavior {
