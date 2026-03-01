@@ -166,8 +166,7 @@ function App() {
                     onClick={() => setInput(item.question)}
                     className="group block w-full text-left px-4 py-3.5 rounded-xl bg-ink-800/60 border border-ink-600/40 hover:border-accent-amber/40 hover:bg-ink-800 transition-all duration-200 text-sm text-ink-300 hover:text-ink-100"
                   >
-                    <span className="font-medium text-ink-400 group-hover:text-accent-amber transition-colors">{item.name}</span>
-                    <span className="block mt-1 text-ink-200 group-hover:text-ink-100 transition-colors">{item.question}</span>
+                    <span className="group-hover:text-accent-amber transition-colors">{item.question}</span>
                   </button>
                 ))}
               </div>
