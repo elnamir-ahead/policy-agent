@@ -11,9 +11,8 @@ resource "aws_lambda_function" "chat" {
 
   environment {
     variables = {
-      DYNAMODB_TABLE       = aws_dynamodb_table.conversations.name
-      AWS_REGION           = var.aws_region
-      ENABLE_WEB_SEARCH    = var.enable_web_search
+      DYNAMODB_TABLE    = aws_dynamodb_table.conversations.name
+      ENABLE_WEB_SEARCH = var.enable_web_search
     }
   }
 }
