@@ -22,7 +22,7 @@ resource "aws_lambda_function_url" "chat" {
   authorization_type = "NONE"
   cors {
     allow_origins = ["*"]
-    allow_methods = ["POST", "OPTIONS"]
+    allow_methods = ["*"]
     allow_headers = ["content-type"]
   }
 }
