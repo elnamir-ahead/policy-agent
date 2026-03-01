@@ -64,11 +64,11 @@ function App() {
       })
       clearTimeout(timeoutId)
 
-      const text = await res.text()
+      const responseText = await res.text()
       if (!res.ok) {
         const err = (() => {
           try {
-            return JSON.parse(text)
+            return JSON.parse(responseText)
           } catch {
             return {}
           }
@@ -78,7 +78,7 @@ function App() {
 
       const data = (() => {
         try {
-          return JSON.parse(text)
+          return JSON.parse(responseText)
         } catch {
           throw new Error('Invalid response from server. Try refreshing the page.')
         }
