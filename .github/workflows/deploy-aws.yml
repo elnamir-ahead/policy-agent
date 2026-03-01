@@ -1,0 +1,90 @@
+name: Build and Deploy to AWS
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.0"
+          terraform_wrapper: false
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # --- BUILD ---
+      - name: Build Lambda package
+        run: |
+          chmod +x scripts/*.sh
+          ./scripts/build_lambda.sh
+
+      - name: Build frontend
+        run: ./scripts/build_frontend.sh
+
+      # --- DEPLOY ---
+      - name: Setup Terraform state bucket
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          BUCKET="procurement-agent-tfstate-${ACCOUNT_ID}"
+          aws s3 mb "s3://${BUCKET}" --region ${{ env.AWS_REGION }} 2>/dev/null || true
+          echo "TFSTATE_BUCKET=${BUCKET}" >> $GITHUB_ENV
+
+      - name: Terraform Init
+        working-directory: infrastructure
+        run: |
+          terraform init -upgrade \
+            -backend-config="bucket=${TFSTATE_BUCKET}" \
+            -backend-config="key=policy-agent/terraform.tfstate" \
+            -backend-config="region=${{ env.AWS_REGION }}"
+        env:
+          TFSTATE_BUCKET: ${{ env.TFSTATE_BUCKET }}
+
+      - name: Terraform Apply
+        working-directory: infrastructure
+        run: terraform apply -auto-approve
+
+      - name: Deploy frontend to S3
+        run: |
+          BUCKET=$(cd infrastructure && terraform output -raw frontend_bucket)
+          API_URL=$(cd infrastructure && terraform output -raw lambda_function_url)
+          echo "{\"apiUrl\": \"$API_URL\"}" > frontend/dist/config.json
+          aws s3 sync frontend/dist "s3://$BUCKET" --delete
+
+      - name: Deployment summary
+        run: |
+          echo "## Build and deploy complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          APP_URL=$(cd infrastructure && terraform output -raw app_url)
+          echo "**App URL:** $APP_URL" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Share this URL to use the Policy Knowledge Agent." >> $GITHUB_STEP_SUMMARY

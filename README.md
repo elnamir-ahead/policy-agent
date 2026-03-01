@@ -2,7 +2,13 @@
 
 24/7 Policy & Process Assistant — procurement policy knowledge base with evidence-backed answers, web search when needed, and artifact generation.
 
-## Deploy to AWS (Anyone Can Run Live)
+## Deploy to AWS
+
+**Option 1: GitHub Actions** (recommended)
+
+Push to `main` to deploy automatically. Configure secrets first — see [.github/DEPLOY_SETUP.md](.github/DEPLOY_SETUP.md).
+
+**Option 2: Local deploy**
 
 ```bash
 chmod +x scripts/*.sh

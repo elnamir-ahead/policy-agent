@@ -1,0 +1,4 @@
+# Copy to backend.hcl and fill in bucket (from: procurement-agent-tfstate-ACCOUNT_ID)
+# bucket  = "procurement-agent-tfstate-123456789012"
+# region  = "us-east-1"
+# key     = "policy-agent/terraform.tfstate"

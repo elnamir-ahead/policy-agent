@@ -10,6 +10,11 @@ terraform {
       version = "~> 2.0"
     }
   }
+  backend "s3" {
+    key    = "policy-agent/terraform.tfstate"
+    region = "us-east-1"
+    # bucket set via -backend-config in CI; for local use backend.hcl
+  }
 }
 
 provider "aws" {

@@ -15,7 +15,14 @@ echo "==> Building frontend..."
 
 echo "==> Deploying infrastructure..."
 cd "$INFRA_DIR"
-terraform init -upgrade
+# Create state bucket if needed, init with backend
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+TFSTATE_BUCKET="procurement-agent-tfstate-${ACCOUNT_ID}"
+aws s3 mb "s3://${TFSTATE_BUCKET}" --region us-east-1 2>/dev/null || true
+terraform init -upgrade \
+  -backend-config="bucket=${TFSTATE_BUCKET}" \
+  -backend-config="key=policy-agent/terraform.tfstate" \
+  -backend-config="region=us-east-1"
 terraform apply -auto-approve
 
 echo "==> Uploading frontend to S3..."
