@@ -154,7 +154,7 @@ function App() {
                 Ask <span className="text-accent-amber font-medium">anything</span> — policy, process, or general questions.
               </p>
               <p className="text-ink-500 text-sm max-w-md mx-auto">
-                Grounded in your procurement policies. Searches the web when the knowledge base doesn&apos;t have the answer.
+                Uses your policy knowledge first; adds web search or other tools when needed for the question.
               </p>
             </div>
             <div className="space-y-3">

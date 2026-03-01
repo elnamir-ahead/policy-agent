@@ -193,45 +193,38 @@ def _indicates_need_web_search(response: str) -> bool:
 def chat(messages: list[dict], session_id: Optional[str] = None) -> dict:
     """
     Process a chat turn. Returns {response, citations, artifacts}.
-    Web search is conditional:
-    - Real-time queries (date, time, weather): search FIRST (KB doesn't have these)
-    - Other queries: try KB first, then search if agent indicates it doesn't know
+    Flow: always use policy knowledge (RAG); for any question, optionally add
+    date/time or web search to context, then call LLM. Retry with web search
+    only if the LLM indicates it doesn't know.
     """
     last_user_msg = next((m["content"] for m in reversed(messages) if m.get("role") == "user"), "")
 
-    # Step 1: Real-time info (date/time/weather)
-    web_search_context = ""
-    if last_user_msg and _is_realtime_query(last_user_msg):
-        # Date/time: always inject from system (no search, no ENABLE_WEB_SEARCH needed)
-        fallback = _get_realtime_fallback(last_user_msg)
-        if fallback:
-            web_search_context = fallback
-        # Weather: needs web search
-        elif SEARCH_ENABLED:
+    # Extra context: policy is always in build_knowledge_context(); add tools when relevant
+    extra_context = ""
+    if last_user_msg:
+        # Tool: current date/time (no search needed)
+        date_time_block = _get_realtime_fallback(last_user_msg)
+        if date_time_block:
+            extra_context = date_time_block
+        # Tool: web search for realtime (e.g. weather) or we'll retry below if LLM doesn't know
+        if not extra_context and _is_realtime_query(last_user_msg) and SEARCH_ENABLED:
             search_results = search_web(_get_search_query(last_user_msg), max_results=5)
             if search_results:
-                web_search_context = format_search_results(search_results)
+                extra_context = format_search_results(search_results)
 
-    # Step 2: First LLM call (with web results if we pre-searched)
-    system = build_knowledge_context(web_search_context=web_search_context)
+    # Single LLM call: policy (RAG) + optional tools (date/time or search)
+    system = build_knowledge_context(web_search_context=extra_context)
     response_text, citations = invoke_bedrock(messages, system)
 
-    # Step 3: If agent still doesn't know AND we didn't search yet, search and retry
-    if SEARCH_ENABLED and not web_search_context and _indicates_need_web_search(response_text):
-        if last_user_msg:
-            search_results = search_web(last_user_msg, max_results=5)
-            if search_results:
-                web_search_context = format_search_results(search_results)
-                system_with_web = build_knowledge_context(web_search_context=web_search_context)
-                response_text, citations = invoke_bedrock(messages, system_with_web)
+    # If LLM indicated it doesn't know and we didn't search yet, add search and retry once
+    if SEARCH_ENABLED and not extra_context and last_user_msg and _indicates_need_web_search(response_text):
+        search_results = search_web(last_user_msg, max_results=5)
+        if search_results:
+            extra_context = format_search_results(search_results)
+            system = build_knowledge_context(web_search_context=extra_context)
+            response_text, citations = invoke_bedrock(messages, system)
 
-    # Check if we should add artifact (e.g., email draft)
     artifacts = []
-    last_user = next((m["content"] for m in reversed(messages) if m.get("role") == "user"), "")
-    if "draft" in last_user.lower() and ("email" in last_user.lower() or "intake" in last_user.lower()):
-        # Agent should have included it in response; we could parse it
-        pass
-
     return {
         "response": response_text,
         "citations": citations,
