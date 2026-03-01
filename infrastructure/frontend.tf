@@ -24,11 +24,11 @@ resource "aws_s3_bucket_ownership_controls" "frontend" {
   }
 }
 
-# Config.json with API URL (injected at deploy)
+# Config.json: use /api (CloudFront proxy) for same-origin, avoids Lambda 403
 resource "aws_s3_object" "config" {
   bucket       = aws_s3_bucket.frontend.id
   key          = "config.json"
-  content      = jsonencode({ apiUrl = aws_lambda_function_url.chat.function_url })
+  content      = jsonencode({ apiUrl = "/api" })
   content_type = "application/json"
 }
 
@@ -52,6 +52,40 @@ resource "aws_cloudfront_distribution" "frontend" {
     domain_name              = aws_s3_bucket.frontend.bucket_regional_domain_name
     origin_id                = "S3-${aws_s3_bucket.frontend.id}"
     origin_access_control_id = aws_cloudfront_origin_access_control.frontend.id
+  }
+
+  # Lambda Function URL as origin for /api/* (same-origin, avoids 403)
+  origin {
+    domain_name = replace(replace(aws_lambda_function_url.chat.function_url, "https://", ""), "/", "")
+    origin_id   = "Lambda-chat"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  # API: /api/* -> Lambda (same origin as frontend, no CORS/403)
+  ordered_cache_behavior {
+    path_pattern     = "/api/*"
+    target_origin_id = "Lambda-chat"
+
+    allowed_methods        = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods         = ["GET", "HEAD"]
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
+
+    forwarded_values {
+      query_string = true
+      headers      = ["Content-Type", "Origin"]
+      cookies { forward = "none" }
+    }
+
+    min_ttl     = 0
+    default_ttl = 0
+    max_ttl     = 0
   }
 
   default_cache_behavior {
