@@ -45,6 +45,7 @@ SYSTEM_PROMPT = """You are the Procurement Concierge, a 24/7 policy and process 
 8. Flag when Legal/Security/Finance reviews are required based on the escalation triggers.
 9. When web search results are provided below, use them to answer the user's question—including general or non-procurement questions (current events, general knowledge, etc.). Cite sources by URL. Do not deflect to procurement-only when search results are available; answer from the results.
 10. When a "Current Date (system)" or "Current Time (system)" section is provided below, use that as today's date or current time and answer date/time questions directly (e.g. "Today is [date].").
+11. When answering a question that is not mainly about procurement (e.g. current events, general knowledge), do not add a closing line like "Is there anything procurement-related I can help you with?"—just answer the question.
 """
 
 
@@ -116,13 +117,12 @@ def invoke_bedrock(messages: list[dict], system: str):
         return f"Error calling Bedrock: {e.response['Error']['Message']}", []
 
 
-# Queries we know the KB won't have - search immediately (no two-step)
+# Only date/time: we inject from system (no search). All other questions → one LLM call, then search if it doesn't know.
 REALTIME_QUERY_PATTERNS = [
     "date today", "today's date", "todays date", "current date", "what date", "what's the date",
     "what is the date", "what is today", "today date",
     "time now", "current time", "what time", "what's the time",
     "what is the time", "what time is it",
-    "weather", "temperature",
 ]
 
 # Phrases that indicate the agent doesn't have the answer or didn't understand (triggers web search retry)
@@ -162,14 +162,7 @@ def _is_realtime_query(query: str) -> bool:
 
 
 def _get_search_query(user_msg: str) -> str:
-    """Get an effective search query (normalize for better results)."""
-    lower = user_msg.lower()
-    if any(p in lower for p in ["date", "today"]):
-        return "current date today"
-    if any(p in lower for p in ["time", "clock"]):
-        return "current time now"
-    if "weather" in lower or "temperature" in lower:
-        return "current weather"
+    """Search query for retry: use user message as-is (we don't predict question types)."""
     return user_msg
 
 
@@ -193,26 +186,18 @@ def _indicates_need_web_search(response: str) -> bool:
 def chat(messages: list[dict], session_id: Optional[str] = None) -> dict:
     """
     Process a chat turn. Returns {response, citations, artifacts}.
-    Flow: always use policy knowledge (RAG); for any question, optionally add
-    date/time or web search to context, then call LLM. Retry with web search
-    only if the LLM indicates it doesn't know.
+    Flow: policy (RAG) always in context. Only date/time is pre-injected from system.
+    For any other question we call the LLM once; if it indicates it doesn't know,
+    we run web search and call the LLM again with search results (no keyword list).
     """
     last_user_msg = next((m["content"] for m in reversed(messages) if m.get("role") == "user"), "")
 
-    # Extra context: policy is always in build_knowledge_context(); add tools when relevant
+    # Extra context: only date/time from system (no keyword list). Everything else → LLM first, then search if it doesn't know.
     extra_context = ""
-    if last_user_msg:
-        # Tool: current date/time (no search needed)
-        date_time_block = _get_realtime_fallback(last_user_msg)
-        if date_time_block:
-            extra_context = date_time_block
-        # Tool: web search for realtime (e.g. weather) or we'll retry below if LLM doesn't know
-        if not extra_context and _is_realtime_query(last_user_msg) and SEARCH_ENABLED:
-            search_results = search_web(_get_search_query(last_user_msg), max_results=5)
-            if search_results:
-                extra_context = format_search_results(search_results)
+    if last_user_msg and _is_realtime_query(last_user_msg):
+        extra_context = _get_realtime_fallback(last_user_msg) or ""
 
-    # Single LLM call: policy (RAG) + optional tools (date/time or search)
+    # One LLM call: policy (RAG) + optional date/time. No pre-search based on keywords.
     system = build_knowledge_context(web_search_context=extra_context)
     response_text, citations = invoke_bedrock(messages, system)
 
