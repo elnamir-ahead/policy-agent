@@ -2,6 +2,9 @@
 
 24/7 Policy & Process Assistant — procurement policy knowledge base with evidence-backed answers, web search when needed, and artifact generation.
 
+📐 **[Architecture & Pipeline Diagram](docs/ARCHITECTURE.md)** — design, tools, and flow  
+📖 **[User Guide](docs/USER_GUIDE.md)** — how to use the agent
+
 ## Deploy to AWS
 
 **Option 1: GitHub Actions** (recommended)
